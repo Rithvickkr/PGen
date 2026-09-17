@@ -80,3 +80,67 @@ export const KITCHEN: Record<string, ChapterTheme> = {
 export function themeFor(stepId: string): ChapterTheme {
   return KITCHEN[stepId] ?? KITCHEN.idea;
 }
+
+/* ------------------------------------------------------------------ */
+/* Stations: the camera glides between them as chapters change         */
+/* ------------------------------------------------------------------ */
+
+export interface Station {
+  id: 'pantry' | 'prep' | 'stove' | 'pass';
+  name: string;
+}
+
+export const STATIONS: Station[] = [
+  { id: 'pantry', name: 'Pantry' },
+  { id: 'prep', name: 'Prep counter' },
+  { id: 'stove', name: 'Stove' },
+  { id: 'pass', name: 'The pass' },
+];
+
+const STATION_OF: Record<string, number> = {
+  start: 0,
+  idea: 0,
+  users: 1,
+  platform: 1,
+  features: 1,
+  design: 3,
+  tech: 2,
+  quality: 2,
+  delivery: 2,
+  review: 3,
+};
+
+export function stationFor(stepId: string | undefined): number {
+  return stepId ? (STATION_OF[stepId] ?? 0) : 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* The chef's lines. Prewritten, never generated.                      */
+/* ------------------------------------------------------------------ */
+
+export const CHEF_TIPS: Record<string, string> = {
+  start: 'Welcome in! Let’s set the heat and decide what we’re cooking.',
+  idea: 'Every great dish starts with a clear base. Keep it simple.',
+  users: 'We cook for our guests. The more specific, the tastier.',
+  platform: 'What are we making today? I’ll grab the right pans.',
+  features: 'Mise en place! Line up the must-haves for version one.',
+  design: 'We eat with our eyes first. How should it look on the plate?',
+  tech: 'Let’s check the kitchen. What tools do we have to work with?',
+  quality: 'Clean kitchen, happy guests. Set your standards.',
+  delivery: 'Nearly there! How should we pace the cooking?',
+  review: 'Order up! Everything’s ready for the pass.',
+};
+
+export const CHEF_REACTIONS = {
+  add: ['Smells good.', 'Oh, that’s going in.', 'Nice choice.', 'Perfect, in it goes.', 'Chef’s kiss.', 'Now we’re cooking.'],
+  chop: ['Nice knife work.', 'Keep chopping.', 'Look at those slices.'],
+  stir: ['Keep stirring, it’s thickening nicely.', 'Rich and tasty so far.'],
+  remove: ['Taking that back out. No problem.'],
+  skip: ['We can come back to that.', 'No rush, that one’s optional.'],
+  coin: ['Budget noted.'],
+  tick: ['Timer set.'],
+};
+
+export function pickLine(lines: string[], seed: number): string {
+  return lines[Math.abs(seed) % lines.length];
+}

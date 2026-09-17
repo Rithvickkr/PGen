@@ -20,7 +20,7 @@ interface ReviewProps {
 
 const LEVEL_LABEL = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' };
 
-function followUps(outcome: string, target: Target, memoryFile?: string) {
+export function followUps(outcome: string, target: Target, memoryFile?: string) {
   const first =
     outcome === 'validate'
       ? {
@@ -64,7 +64,7 @@ function followUps(outcome: string, target: Target, memoryFile?: string) {
 }
 
 /** Renders `code` spans written with backticks in how-to steps. */
-function withCode(text: string) {
+export function withCode(text: string) {
   return text.split(/(`[^`]+`)/).map((part, i) =>
     part.startsWith('`') ? <code key={i}>{part.slice(1, -1)}</code> : <span key={i}>{part}</span>,
   );
@@ -210,7 +210,7 @@ export function Review({ prompt, answers, strength, onJump }: ReviewProps) {
   );
 }
 
-function FollowUp({ title, text }: { title: string; text: string }) {
+export function FollowUp({ title, text }: { title: string; text: string }) {
   const { copied, copy } = useCopy();
   const [open, setOpen] = useState(false);
   return (

@@ -1,6 +1,21 @@
 const PATHS = {
   check: <polyline points="20 6 9 17 4 12" />,
   chevronDown: <polyline points="6 9 12 15 18 9" />,
+  volume: (
+    <>
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+      <path d="M19 5a10 10 0 0 1 0 14" />
+    </>
+  ),
+  mute: (
+    <>
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="22" y1="9" x2="16" y2="15" />
+      <line x1="16" y1="9" x2="22" y2="15" />
+    </>
+  ),
+  zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />,
   more: (
     <>
       <circle cx="5" cy="12" r="1.2" />

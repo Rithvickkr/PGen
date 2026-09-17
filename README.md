@@ -1,7 +1,7 @@
 # PGen: starter prompts for AI builders
 
 A free, single-page tool that turns an app idea into a well-engineered starter prompt for any AI: ChatGPT, Claude, Gemini, or coding agents like Cursor, Claude Code, Codex, and Copilot.
-People take a short guided journey (one conversational question at a time, grouped into chapters), and the prompt builds live as they go. No AI calls, no backend, and answers never leave the browser.
+People cook their prompt in an illustrated kitchen: one conversational question at a time, where every answer is a cooking action (chopping, stirring, picking jars, dragging ingredients into the pot) and the finished prompt is served on an order ticket. No AI calls, no backend, and answers never leave the browser.
 
 ## Features
 
@@ -10,6 +10,7 @@ People take a short guided journey (one conversational question at a time, group
 - **Four goals:** refine the idea, plan it, plan and build, or learn while building
 - **Adaptive questions:** follow-ups change with the project type (web, mobile, extension, API, CLI, bot, game, automation)
 - **Live preview**, prompt strength score with tips, copy, `.md` download, and share links (answers encoded in the URL)
+- **Kitchen experience:** four stations with camera glides, a reacting chef, a taste test flavor profile, synthesized sound and haptics (mutable), a cloche reveal, and a shareable recipe card image. **Quick mode** (in the menu) switches to a plain form
 - **Autosave** to localStorage, three example projects, and follow-up prompts for after the AI replies
 
 ## Develop
@@ -34,6 +35,9 @@ npm run build    # outputs static files to dist/
 | `src/lib/tools.ts` | Supported AI tools, their how-to steps and instruction file names |
 | `src/lib/strength.ts` | Prompt strength checks and tips |
 | `src/data/examples.ts` | Example projects |
+| `src/components/World.tsx` | The illustrated kitchen: stations, camera, flights, finale objects |
+| `src/components/Controls.tsx` | Cooking controls for each question type |
+| `src/lib/sound.ts` | Synthesized kitchen sounds and haptics |
 | `src/styles.css` | Design tokens and all styles |
 
 To add a question, add it to `steps.ts`, then reference its `id` in `generate.ts`.

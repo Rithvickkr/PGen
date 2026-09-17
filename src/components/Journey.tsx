@@ -6,6 +6,7 @@ import { askFor } from '../data/asks';
 import { EXAMPLES, type Example } from '../data/examples';
 import { themeFor } from '../data/kitchen';
 import { Control } from './Field';
+import { CookingControl, type KitchenAction } from './Controls';
 import { Icon } from './Icon';
 
 export interface FlowItem {
@@ -110,9 +111,12 @@ interface QuestionScreenProps {
   answers: Answers;
   onChange: (id: string, value: AnswerValue) => void;
   onNext: () => void;
+  /** Kitchen mode turns answers into cooking actions; quick mode shows plain inputs. */
+  cooking?: boolean;
+  act?: (action: KitchenAction) => void;
 }
 
-export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, position, answers, onChange, onNext }: QuestionScreenProps) {
+export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, position, answers, onChange, onNext, cooking = false, act }: QuestionScreenProps) {
   const { q, step } = item;
   const id = `f-${q.id}`;
   const value = answers[q.id];
@@ -125,7 +129,7 @@ export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, pos
   useEffect(() => {
     if (!window.matchMedia('(pointer: fine)').matches) return;
     const t = window.setTimeout(() => {
-      rootRef.current?.querySelector<HTMLElement>('.q-control > .input, .q-control .list .input')?.focus({ preventScroll: true });
+      rootRef.current?.querySelector<HTMLElement>('.q-control input.input, .q-control textarea.input')?.focus({ preventScroll: true });
     }, 250);
     return () => window.clearTimeout(t);
   }, []);
@@ -179,7 +183,11 @@ export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, pos
       {q.help && <p className="q-help">{q.help}</p>}
 
       <div className="q-control">
-        <Control id={id} q={q} value={value} onChange={handleChange} />
+        {cooking && act ? (
+          <CookingControl id={id} q={q} stepId={step.id} value={value} onChange={handleChange} act={act} />
+        ) : (
+          <Control id={id} q={q} value={value} onChange={handleChange} />
+        )}
       </div>
 
       <div className="q-actions">

@@ -31,6 +31,7 @@ export function createReader(a: Answers) {
     return visible(id) && Array.isArray(v) ? v.map((s) => s.trim()).filter(Boolean) : [];
   };
   return {
+    visible,
     text,
     list,
     label: (id: string) => {

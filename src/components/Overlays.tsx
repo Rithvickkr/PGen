@@ -65,12 +65,16 @@ export function MoreMenu({
   onClose,
   onPick,
   onReset,
+  quick,
+  onToggleQuick,
 }: {
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
   onPick: (example: Example) => void;
   onReset: () => void;
+  quick: boolean;
+  onToggleQuick: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -98,6 +102,11 @@ export function MoreMenu({
             </button>
           ))}
           <div className="menu-divider" />
+          <button type="button" role="menuitemcheckbox" aria-checked={quick} className="menu-item menu-item-row" onClick={onToggleQuick}>
+            <Icon name="zap" size={14} />
+            <span className="menu-item-title">Quick mode</span>
+            <span className={`menu-switch${quick ? ' is-on' : ''}`} aria-hidden="true" />
+          </button>
           <button type="button" role="menuitem" className="menu-item menu-item-row" onClick={onReset}>
             <Icon name="reset" size={14} />
             <span className="menu-item-title">Start over</span>
