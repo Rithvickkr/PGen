@@ -1,9 +1,11 @@
-import { useEffect, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from 'react';
 import type { AnswerValue, Answers, Question, Step } from '../types';
 import { isAnswered } from '../lib/answers';
 import { summarize } from '../lib/summary';
 import { askFor } from '../data/asks';
 import { EXAMPLES, type Example } from '../data/examples';
+import { themeFor } from '../data/kitchen';
+import { Bowl } from './Kitchen';
 import { Control } from './Field';
 import { Icon } from './Icon';
 
@@ -35,56 +37,62 @@ export function Welcome({
 }) {
   return (
     <section className="welcome">
-      <p className="welcome-badge">
-        <span className="dot" />
-        Free, private, and about 5 minutes
-      </p>
-      <h1 className="welcome-title">
-        Turn your app idea into a prompt <em>any AI</em> can build from.
-      </h1>
-      <p className="welcome-lead">
-        Answer a few friendly questions about your idea. We’ll shape your answers into a clear, well-structured prompt for
-        ChatGPT, Claude, Gemini, Cursor, and more.
-      </p>
+      <div className="welcome-copy">
+        <p className="welcome-badge">
+          <span className="dot" />
+          Free, private, and about 5 minutes
+        </p>
+        <h1 className="welcome-title">
+          Let’s cook up a prompt <em>any AI</em> can build from.
+        </h1>
+        <p className="welcome-lead">
+          Add your idea one ingredient at a time. We’ll mix your answers into a clear, well-structured prompt for ChatGPT,
+          Claude, Gemini, Cursor, and more.
+        </p>
 
-      <div className="welcome-actions">
-        {resumable ? (
-          <>
-            <button type="button" className="btn btn-primary btn-lg" onClick={onResume}>
-              Continue where you left off
+        <div className="welcome-actions">
+          {resumable ? (
+            <>
+              <button type="button" className="btn btn-primary btn-lg" onClick={onResume}>
+                Back to the kitchen
+                <Icon name="arrowRight" size={16} />
+              </button>
+              <button type="button" className="btn btn-quiet btn-lg" onClick={onStart}>
+                Start from the first step
+              </button>
+            </>
+          ) : (
+            <button type="button" className="btn btn-primary btn-lg" onClick={onStart}>
+              Start cooking
               <Icon name="arrowRight" size={16} />
             </button>
-            <button type="button" className="btn btn-quiet btn-lg" onClick={onStart}>
-              Start from the beginning
+          )}
+        </div>
+
+        <ol className="welcome-path" aria-label="How it works">
+          <li>
+            <span>1</span>Gather ingredients
+          </li>
+          <li>
+            <span>2</span>Mix the details
+          </li>
+          <li>
+            <span>3</span>Serve your prompt
+          </li>
+        </ol>
+
+        <div className="welcome-examples">
+          <span className="welcome-examples-label">Or try a house recipe</span>
+          {EXAMPLES.map((ex) => (
+            <button key={ex.id} type="button" className="example-chip" onClick={() => onExample(ex)}>
+              {ex.title}
             </button>
-          </>
-        ) : (
-          <button type="button" className="btn btn-primary btn-lg" onClick={onStart}>
-            Start the journey
-            <Icon name="arrowRight" size={16} />
-          </button>
-        )}
+          ))}
+        </div>
       </div>
 
-      <ol className="welcome-path" aria-label="How it works">
-        <li>
-          <span>1</span>Share your idea
-        </li>
-        <li>
-          <span>2</span>Shape the details
-        </li>
-        <li>
-          <span>3</span>Get your prompt
-        </li>
-      </ol>
-
-      <div className="welcome-examples">
-        <span className="welcome-examples-label">Or peek at an example</span>
-        {EXAMPLES.map((ex) => (
-          <button key={ex.id} type="button" className="example-chip" onClick={() => onExample(ex)}>
-            {ex.title}
-          </button>
-        ))}
+      <div className="welcome-art" aria-hidden="true">
+        <Bowl flow={[]} answers={{}} decor />
       </div>
     </section>
   );
@@ -112,6 +120,7 @@ export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, pos
   const answered = isAnswered(answers, q.id);
   const indexInChapter = position - chapter.start;
   const firstInChapter = indexInChapter === 0;
+  const theme = themeFor(step.id);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -148,16 +157,17 @@ export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, pos
   return (
     <div className="q-screen" ref={rootRef} onKeyDown={handleKey}>
       {firstInChapter ? (
-        <div className="chapter-intro">
+        <div className="chapter-intro" style={{ '--swatch': theme.color } as CSSProperties}>
           <span className="chapter-tag">
-            Chapter {chapterNumber} of {chapterTotal}
+            Step {chapterNumber} of {chapterTotal} · {theme.ingredient}
           </span>
-          <span className="chapter-name">{step.title}</span>
-          <span className="chapter-sub">{step.subtitle}</span>
+          <span className="chapter-name">{theme.name}</span>
+          <span className="chapter-sub">{theme.line}</span>
         </div>
       ) : (
         <p className="q-kicker">
-          {step.title}
+          <i className="q-swatch" style={{ background: theme.color }} />
+          {theme.name}
           <span>
             {indexInChapter + 1} / {chapter.count}
           </span>
@@ -178,7 +188,16 @@ export function QuestionScreen({ item, chapter, chapterNumber, chapterTotal, pos
           Continue
           <Icon name="arrowRight" size={15} />
         </button>
-        <span className="q-hint">{answered && hint ? <>or {hint}</> : answered ? 'Looks good' : 'Optional, you can skip this'}</span>
+        <span className="q-hint">
+          {answered ? (
+            <>
+              <i className="q-swatch" style={{ background: theme.color }} />
+              In the bowl{hint && <> · or {hint}</>}
+            </>
+          ) : (
+            'Optional, you can skip this'
+          )}
+        </span>
       </div>
     </div>
   );
@@ -247,12 +266,12 @@ export function JourneyMap({
     <div className="map">
       <div className="map-head">
         <div>
-          <div className="map-title">Your journey</div>
+          <div className="map-title">Recipe steps</div>
           <div className="map-meta">
             {answeredCount} of {flow.length} answered · tap any question to revisit it
           </div>
         </div>
-        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close journey map">
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Close recipe steps">
           <Icon name="x" size={16} />
         </button>
       </div>
@@ -261,7 +280,8 @@ export function JourneyMap({
           <section key={c.step.id} className="map-chapter">
             <h3 className="map-chapter-title">
               <span>{String(ci + 1).padStart(2, '0')}</span>
-              {c.step.title}
+              <i className="q-swatch" style={{ background: themeFor(c.step.id).color }} />
+              {themeFor(c.step.id).name}
             </h3>
             <ul>
               {flow.slice(c.start, c.start + c.count).map((f, i) => {
@@ -288,7 +308,7 @@ export function JourneyMap({
         ))}
         <button type="button" className={`map-finish${position >= flow.length ? ' is-current' : ''}`} onClick={() => onSelect(flow.length)}>
           <Icon name="sparkle" size={14} />
-          See your prompt
+          Serve your prompt
         </button>
       </div>
     </div>

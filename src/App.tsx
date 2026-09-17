@@ -11,9 +11,10 @@ import { Preview } from './components/Preview';
 import { Review } from './components/Review';
 import { JourneyMap, Logo, QuestionScreen, Trail, Welcome, type Chapter, type FlowItem } from './components/Journey';
 import { ConfirmDialog, Drawer, MoreMenu } from './components/Overlays';
+import { Bowl, KitchenStrip, RecipeCard, Serve } from './components/Kitchen';
 
 type Dialog = { title: string; body: string; confirmLabel: string; onConfirm: () => void };
-type Panel = 'preview' | 'map' | null;
+type Panel = 'preview' | 'map' | 'recipe' | null;
 
 /** Every question in authoring order, used to find the nearest question when one disappears. */
 const ALL_QUESTIONS = STEPS.flatMap((step) => step.questions.map((q) => q.id));
@@ -27,6 +28,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
+  const [served, setServed] = useState(false);
 
   useEffect(() => saveState(answers, pos), [answers, pos]);
 
@@ -167,7 +169,7 @@ export default function App() {
               </div>
             )}
             {!isWelcome && (
-              <button type="button" className="icon-btn" onClick={() => setPanel('map')} aria-label="Journey map" title="Journey map">
+              <button type="button" className="icon-btn" onClick={() => setPanel('map')} aria-label="Recipe steps" title="Recipe steps">
                 <Icon name="map" size={17} />
               </button>
             )}
@@ -181,60 +183,83 @@ export default function App() {
         </div>
       </header>
 
-      <main className={`stage${isReview ? ' stage-wide' : ''}`}>
-        {!isWelcome && (
-          <button type="button" className="back-link" onClick={back}>
-            <Icon name="arrowLeft" size={15} />
-            Back
-          </button>
+      <main className={`stage${current ? ' stage-kitchen' : ''}${isReview ? ' stage-wide' : ''}`}>
+        {isWelcome && (
+          <div key={pos} className={`scene scene-${direction}`}>
+            <Welcome resumable={hasContent} onStart={() => goToIndex(0)} onResume={() => goToIndex(resumeIndex)} onExample={loadExample} />
+          </div>
         )}
 
-        <div key={pos} className={`scene scene-${direction}`}>
-          {isWelcome && (
-            <Welcome
-              resumable={hasContent}
-              onStart={() => goToIndex(0)}
-              onResume={() => goToIndex(resumeIndex)}
-              onExample={loadExample}
-            />
-          )}
+        {current && (
+          <div className="kitchen-layout">
+            <div className="kitchen-main">
+              <button type="button" className="back-link" onClick={back}>
+                <Icon name="arrowLeft" size={15} />
+                Back
+              </button>
+              <KitchenStrip flow={flow} answers={answers} onOpen={() => setPanel('recipe')} />
+              <div key={pos} className={`scene scene-${direction}`}>
+                <QuestionScreen
+                  item={current}
+                  chapter={chapters[chapterIdx]}
+                  chapterNumber={chapterIdx + 1}
+                  chapterTotal={chapters.length}
+                  position={index}
+                  answers={answers}
+                  onChange={update}
+                  onNext={next}
+                />
+              </div>
+            </div>
+            <aside className="kitchen-side" aria-label="Your recipe so far">
+              <Bowl flow={flow} answers={answers} />
+              <RecipeCard chapters={chapters} flow={flow} answers={answers} />
+            </aside>
+          </div>
+        )}
 
-          {current && (
-            <QuestionScreen
-              item={current}
-              chapter={chapters[chapterIdx]}
-              chapterNumber={chapterIdx + 1}
-              chapterTotal={chapters.length}
-              position={index}
-              answers={answers}
-              onChange={update}
-              onNext={next}
-            />
-          )}
-
-          {isReview && (
-            <>
-              <header className="finale-head">
-                <p className="chapter-tag">The end of the journey</p>
-                <h1 className="finale-title">Your prompt is ready.</h1>
-                <p className="finale-sub">
-                  Copy it into your AI tool and answer any questions it asks. You can revisit any answer from the{' '}
-                  <button type="button" className="inline-link" onClick={() => setPanel('map')}>
-                    journey map
-                  </button>
-                  .
-                </p>
-              </header>
-              <Review prompt={prompt} answers={answers} strength={strength} onJump={(stepId) => goToIndex(flow.findIndex((f) => f.step.id === stepId))} />
-            </>
-          )}
-        </div>
+        {isReview && (
+          <>
+            <button type="button" className="back-link" onClick={back}>
+              <Icon name="arrowLeft" size={15} />
+              Back
+            </button>
+            <div key={pos} className={`scene scene-${direction}`}>
+              <Serve
+                served={served}
+                onServed={() => setServed(true)}
+                chapters={chapters}
+                flow={flow}
+                answers={answers}
+                onOpenMap={() => setPanel('map')}
+              >
+                <Review prompt={prompt} answers={answers} strength={strength} onJump={(stepId) => goToIndex(flow.findIndex((f) => f.step.id === stepId))} />
+              </Serve>
+            </div>
+          </>
+        )}
       </main>
 
       {panel && (
-        <Drawer onClose={() => setPanel(null)} label={panel === 'map' ? 'Journey map' : 'Prompt preview'}>
+        <Drawer onClose={() => setPanel(null)} label={panel === 'map' ? 'Recipe steps' : panel === 'recipe' ? 'Recipe card' : 'Prompt preview'}>
           {panel === 'map' ? (
             <JourneyMap chapters={chapters} flow={flow} answers={answers} position={index} onSelect={goToIndex} onClose={() => setPanel(null)} />
+          ) : panel === 'recipe' ? (
+            <div className="recipe-panel">
+              <div className="map-head">
+                <div>
+                  <div className="map-title">Your recipe so far</div>
+                  <div className="map-meta">Every answer adds an ingredient</div>
+                </div>
+                <button type="button" className="icon-btn" onClick={() => setPanel(null)} aria-label="Close recipe card">
+                  <Icon name="x" size={16} />
+                </button>
+              </div>
+              <div className="recipe-panel-body">
+                <Bowl flow={flow} answers={answers} />
+                <RecipeCard chapters={chapters} flow={flow} answers={answers} />
+              </div>
+            </div>
           ) : (
             <Preview prompt={prompt} onClose={() => setPanel(null)} />
           )}
