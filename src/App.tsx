@@ -11,7 +11,8 @@ import { Preview } from './components/Preview';
 import { Review } from './components/Review';
 import { JourneyMap, Logo, QuestionScreen, Trail, Welcome, type Chapter, type FlowItem } from './components/Journey';
 import { ConfirmDialog, Drawer, MoreMenu } from './components/Overlays';
-import { Bowl, KitchenStrip, RecipeCard, Serve } from './components/Kitchen';
+import { RecipeCard, Serve } from './components/Kitchen';
+import { KitchenScene } from './components/Scene';
 
 type Dialog = { title: string; body: string; confirmLabel: string; onConfirm: () => void };
 type Panel = 'preview' | 'map' | 'recipe' | null;
@@ -29,6 +30,7 @@ export default function App() {
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [served, setServed] = useState(false);
+  const [cook, setCook] = useState({ tick: 0, stepId: '' });
 
   useEffect(() => saveState(answers, pos), [answers, pos]);
 
@@ -75,9 +77,9 @@ export default function App() {
   const posOf = useCallback((i: number, list: FlowItem[]) => (i < 0 ? 'welcome' : i >= list.length ? 'review' : `q:${list[i].q.id}`), []);
 
   // Auto-advance fires after a delay, so it reads the latest flow and position from a ref.
-  const latest = useRef({ flow, index });
+  const latest = useRef({ flow, index, answers });
   useEffect(() => {
-    latest.current = { flow, index };
+    latest.current = { flow, index, answers };
   });
 
   const goToIndex = useCallback(
@@ -92,7 +94,13 @@ export default function App() {
     [posOf],
   );
 
-  const next = useCallback(() => goToIndex(latest.current.index + 1), [goToIndex]);
+  const next = useCallback(() => {
+    const { flow: list, index: i, answers: a } = latest.current;
+    const item = list[i];
+    // An answered question goes into the pot on the way to the next one.
+    if (item && isAnswered(a, item.q.id)) setCook((c) => ({ tick: c.tick + 1, stepId: item.step.id }));
+    goToIndex(i + 1);
+  }, [goToIndex]);
   const back = () => goToIndex(index - 1);
 
   const update = useCallback((id: string, value: AnswerValue) => {
@@ -183,37 +191,63 @@ export default function App() {
         </div>
       </header>
 
-      <main className={`stage${current ? ' stage-kitchen' : ''}${isReview ? ' stage-wide' : ''}`}>
+      <main className={`stage${current ? ' stage-kitchen' : ''}${isReview ? ' stage-kitchen' : ''}`}>
         {isWelcome && (
           <div key={pos} className={`scene scene-${direction}`}>
-            <Welcome resumable={hasContent} onStart={() => goToIndex(0)} onResume={() => goToIndex(resumeIndex)} onExample={loadExample} />
+            <Welcome
+              resumable={hasContent}
+              onStart={() => goToIndex(0)}
+              onResume={() => goToIndex(resumeIndex)}
+              onExample={loadExample}
+              art={
+                <div className="scene-frame scene-frame-welcome">
+                  <KitchenScene mode="welcome" chapters={chapters} flow={flow} answers={answers} onStart={() => goToIndex(hasContent ? resumeIndex : 0)} />
+                </div>
+              }
+            />
           </div>
         )}
 
         {current && (
-          <div className="kitchen-layout">
-            <div className="kitchen-main">
+          <div className="cook-layout">
+            <div className="cook-main">
               <button type="button" className="back-link" onClick={back}>
                 <Icon name="arrowLeft" size={15} />
                 Back
               </button>
-              <KitchenStrip flow={flow} answers={answers} onOpen={() => setPanel('recipe')} />
               <div key={pos} className={`scene scene-${direction}`}>
-                <QuestionScreen
-                  item={current}
-                  chapter={chapters[chapterIdx]}
-                  chapterNumber={chapterIdx + 1}
-                  chapterTotal={chapters.length}
-                  position={index}
-                  answers={answers}
-                  onChange={update}
-                  onNext={next}
-                />
+                <div className="notepad">
+                  <QuestionScreen
+                    item={current}
+                    chapter={chapters[chapterIdx]}
+                    chapterNumber={chapterIdx + 1}
+                    chapterTotal={chapters.length}
+                    position={index}
+                    answers={answers}
+                    onChange={update}
+                    onNext={next}
+                  />
+                </div>
               </div>
             </div>
-            <aside className="kitchen-side" aria-label="Your recipe so far">
-              <Bowl flow={flow} answers={answers} />
-              <RecipeCard chapters={chapters} flow={flow} answers={answers} />
+            <aside className="cook-side" aria-label="Your kitchen">
+              <div className="scene-frame">
+                <KitchenScene
+                  mode="cooking"
+                  chapters={chapters}
+                  flow={flow}
+                  answers={answers}
+                  currentStepId={current.step.id}
+                  cook={cook}
+                  onSelectChapter={goToIndex}
+                  onSetLevel={(l) => update('level', l)}
+                  onTaste={() => setPanel('preview')}
+                  onOpenRecipe={() => setPanel('recipe')}
+                />
+              </div>
+              <p className="scene-hint">
+                Tap a <b>jar</b> to jump to a step · turn a <b>knob</b> to change the level · click the <b>pot</b> to taste
+              </p>
             </aside>
           </div>
         )}
@@ -232,6 +266,8 @@ export default function App() {
                 flow={flow}
                 answers={answers}
                 onOpenMap={() => setPanel('map')}
+                onSetLevel={(l) => update('level', l)}
+                onTaste={() => setPanel('preview')}
               >
                 <Review prompt={prompt} answers={answers} strength={strength} onJump={(stepId) => goToIndex(flow.findIndex((f) => f.step.id === stepId))} />
               </Serve>
@@ -249,14 +285,13 @@ export default function App() {
               <div className="map-head">
                 <div>
                   <div className="map-title">Your recipe so far</div>
-                  <div className="map-meta">Every answer adds an ingredient</div>
+                  <div className="map-meta">Every answer adds an ingredient to the pot</div>
                 </div>
                 <button type="button" className="icon-btn" onClick={() => setPanel(null)} aria-label="Close recipe card">
                   <Icon name="x" size={16} />
                 </button>
               </div>
               <div className="recipe-panel-body">
-                <Bowl flow={flow} answers={answers} />
                 <RecipeCard chapters={chapters} flow={flow} answers={answers} />
               </div>
             </div>

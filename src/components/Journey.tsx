@@ -1,11 +1,10 @@
-import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import type { AnswerValue, Answers, Question, Step } from '../types';
 import { isAnswered } from '../lib/answers';
 import { summarize } from '../lib/summary';
 import { askFor } from '../data/asks';
 import { EXAMPLES, type Example } from '../data/examples';
 import { themeFor } from '../data/kitchen';
-import { Bowl } from './Kitchen';
 import { Control } from './Field';
 import { Icon } from './Icon';
 
@@ -29,11 +28,13 @@ export function Welcome({
   onStart,
   onResume,
   onExample,
+  art,
 }: {
   resumable: boolean;
   onStart: () => void;
   onResume: () => void;
   onExample: (ex: Example) => void;
+  art: ReactNode;
 }) {
   return (
     <section className="welcome">
@@ -46,7 +47,7 @@ export function Welcome({
           Let’s cook up a prompt <em>any AI</em> can build from.
         </h1>
         <p className="welcome-lead">
-          Add your idea one ingredient at a time. We’ll mix your answers into a clear, well-structured prompt for ChatGPT,
+          Step into the kitchen and add your idea one ingredient at a time. We’ll mix your answers into a clear, well-structured prompt for ChatGPT,
           Claude, Gemini, Cursor, and more.
         </p>
 
@@ -91,9 +92,7 @@ export function Welcome({
         </div>
       </div>
 
-      <div className="welcome-art" aria-hidden="true">
-        <Bowl flow={[]} answers={{}} decor />
-      </div>
+      <div className="welcome-art">{art}</div>
     </section>
   );
 }
